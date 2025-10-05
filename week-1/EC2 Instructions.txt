@@ -1,0 +1,22 @@
+Launching an EC2 Instance
+	1.	Create a new Security Group
+	•	Don’t use or edit the default one.
+	•	Add an Inbound Rule:
+	•	Type: HTTP
+	•	Source: Anywhere (IPv4)
+	•	DO NOT TOUCH Outbound Rules.
+	•	Tags are optional.
+	•	Click Create Security Group.
+	2.	Launch an Instance
+	•	Click Launch Instance in the EC2 Dashboard.
+	•	Skip the key pair: select Proceed without a key pair.
+	•	Choose Select existing security group and pick the one you just made.
+	•	Go to Advanced Details → User Data.
+	•	Paste your script.
+	•	Click Launch Instance.
+
+Tear Down the Instance
+	1.	Go to Instances in the EC2 Dashboard.
+	2.	Check the box next to your instance.
+	3.	Click Instance State → Terminate Instance.
+	4.	Confirm to delete it.
