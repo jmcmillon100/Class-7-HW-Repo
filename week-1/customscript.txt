@@ -1,0 +1,126 @@
+#!/bin/bash
+# User data script for EC2 with Apache + metadata HTML
+
+# Update and install Apache
+yum update -y
+yum install -y httpd -y
+systemctl start httpd
+systemctl enable httpd
+
+# Get IMDSv2 token
+TOKEN=$(curl -s -f -X PUT "http://169.254.169.254/latest/api/token" \
+  -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+
+# Fetch metadata
+local_ipv4=$(curl -s -f -H "X-aws-ec2-metadata-token: $TOKEN" \
+  http://169.254.169.254/latest/meta-data/local-ipv4)
+az=$(curl -s -f -H "X-aws-ec2-metadata-token: $TOKEN" \
+  http://169.254.169.254/latest/meta-data/placement/availability-zone)
+macid=$(curl -s -f -H "X-aws-ec2-metadata-token: $TOKEN" \
+  http://169.254.169.254/latest/meta-data/network/interfaces/macs/ | head -n 1)
+vpc=$(curl -s -f -H "X-aws-ec2-metadata-token: $TOKEN" \
+  http://169.254.169.254/latest/meta-data/network/interfaces/macs/${macid}/vpc-id)
+hostname_fqdn=$(hostname -f)
+
+# Write HTML file
+cat <<EOF > /var/www/html/index.html
+<!doctype html>
+<html lang="en" class="h-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Class 7 - Week 2 Homework</title>
+  <style>
+    body {
+      background: url("https://cdn.pixabay.com/photo/2017/06/23/14/50/colombia-2434912_1280.jpg") no-repeat center center fixed;
+      background-size: cover;
+      color: #ffffff;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+    }
+    h1 {
+      color: #ffffff;
+      margin-top: 20px;
+    }
+    img {
+      max-width: 75%;
+      height: auto;
+      border-radius: 8px;
+      animation: tealPulse 3s infinite;
+      transition: transform 0.3s ease;
+    }
+    img:hover {
+      transform: scale(1.05);
+    }
+    .cards {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin: 30px auto;
+      max-width: 90%;
+    }
+    .card {
+      background: rgba(0,0,0,0.7);
+      border-radius: 12px;
+      padding: 20px 30px;
+      flex: 1 1 300px;
+      max-width: 500px;
+      text-align: left;
+      transition: transform 0.3s ease;
+    }
+    .card:hover {
+      transform: scale(1.05);
+    }
+    .card h3 {
+      margin-top: 0;
+      color: #ffcc00;
+      text-align: center;
+    }
+    .highlight { color: #00ffcc; }
+    .red { color: #ff4444; }
+    .yellow { color: #ffeb3b; }
+
+    @keyframes tealPulse {
+      0%, 100% { box-shadow: 0 0 12px rgba(0,255,204,0.6), 0 0 24px rgba(0,255,204,0.4); }
+      50% { box-shadow: 0 0 20px rgba(0,255,204,0.9), 0 0 40px rgba(0,255,204,0.7); }
+    }
+    @keyframes goldPulse {
+      0%, 100% { box-shadow: 0 0 12px rgba(255,215,0,0.6), 0 0 24px rgba(255,215,0,0.4); }
+      50% { box-shadow: 0 0 20px rgba(255,215,0,0.9), 0 0 40px rgba(255,215,0,0.7); }
+    }
+    @keyframes redPulse {
+      0%, 100% { box-shadow: 0 0 12px rgba(255,50,50,0.6), 0 0 24px rgba(255,50,50,0.4); }
+      50% { box-shadow: 0 0 20px rgba(255,50,50,0.9), 0 0 40px rgba(255,50,50,0.7); }
+    }
+
+    .aws-card { animation: goldPulse 3s infinite; }
+    .deliverables-card { animation: redPulse 3s infinite; }
+  </style>
+</head>
+<body>
+  <h1>The World Is Mine! - Who can Stop Me?</h1>
+
+  <img src="https://www.holidayscalendar.com/wp-content/uploads/2022/01/Colombian-Womens-Day-750x375.jpg" alt="Cali, Colombia">
+
+  <div class="cards">
+    <div class="card aws-card">
+      <h3>AWS Instance Details</h3>
+      <p><b>Instance Name: <span class="highlight">$hostname_fqdn</span></b></p>
+      <p><b>Instance Private IP Address: <span class="highlight">$local_ipv4</span></b></p>
+      <p><b>Availability Zone: <span class="highlight">$az</span></b></p>
+      <p><b>Virtual Private Cloud (VPC): <span class="highlight">$vpc</span></b></p>
+    </div>
+
+    <div class="card deliverables-card">
+      <h3>Task Deliverables</h3>
+      <p><b>Nickname: <span class="red">H.I.T.Man_Josh</span></b></p>
+      <p><b>Desired Income: <span class="red">250,000 USD</span></b></p>
+      <p><b>Group Leader: <span class="yellow">Jae Ale</span></b></p>
+    </div>
+  </div>
+</body>
+</html>
+EOF
