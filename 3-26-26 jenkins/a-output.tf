@@ -26,3 +26,8 @@ output "jenkins_initial_admin_password" {
   value       = var.read_jenkins_password ? data.aws_ssm_parameter.jenkins_admin_password[0].value : "Run again with -var='read_jenkins_password=true' after Jenkins boots"
   sensitive   = true
 }
+
+output "ssh_tunnel_command" {
+  description = "SSH tunnel for accessing Jenkins locally"
+  value       = "ssh -L 8080:${aws_instance.jenkins.private_ip}:8080 -J ec2-user@${aws_instance.bastion.public_ip} ec2-user@${aws_instance.jenkins.private_ip}"
+}
